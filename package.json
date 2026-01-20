@@ -1,10 +1,9 @@
 {
   "name": "my-three-app",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "dev": "npx parcel src/index.html",
-    "build": "npx parcel build src/index.html"
+    "dev": "parcel src/main/Text/DOM/index.html",
+    "build": "parcel build src/main/Text/index.html"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +13,6 @@
     "three": "^0.182.0"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.12.5"
+    "parcel": "^2.12.0"
   }
 }
