@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+import * as THREE from 'three';
 
 // 1. 创建场景
 const scene = new THREE.Scene();
@@ -27,19 +27,51 @@ const cube = new THREE.Mesh(geometry, material);
 scene.add(cube);
 
 // 创建一个平行光（类似太阳光）
-const light = new THREE.DirectionalLight(0xFFFFFF, 1);
+const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(-1, 2, 4);
 scene.add(light);
 
-function animate() {
-    requestAnimationFrame(animate); // 浏览器下次重绘前调用我
+function resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    // 获取 Canvas 在屏幕上显示的像素宽
+    const width = canvas.clientWidth;
+    // 获取 Canvas 在屏幕上显示的像素高
+    const height = canvas.clientHeight;
 
-    // 让立方体动起来
+    // 检查渲染器的内部尺寸是否和显示尺寸一样
+    const needResize = canvas.width !== width || canvas.height !== height;
+
+    if (needResize) {
+        // 如果不一样，就调整渲染器大小
+        // 第三个参数 false 很重要！表示不要让渲染器去修改 Canvas 的 CSS 样式
+        renderer.setSize(width, height, false);
+    }
+
+    return needResize;
+}
+
+function render(time) {
+    time *= 0.001;
+
+    // 1. 检查并调整分辨率
+    if (resizeRendererToDisplaySize(renderer)) {
+        const canvas = renderer.domElement;
+
+        // 2. 修正摄像机长宽比
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+
+        // 3. 必须调用这个方法，摄像机参数才会生效！
+        camera.updateProjectionMatrix();
+    }
+
+     // 让立方体动起来
     cube.rotation.x += 0.01;
     cube.rotation.y += 0.01;
 
-    // 咔嚓！渲染一帧
+    // 正常渲染
     renderer.render(scene, camera);
+
+    requestAnimationFrame(render);
 }
 
-animate(); // 开始循环
+requestAnimationFrame(render);
