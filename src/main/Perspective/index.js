@@ -18,10 +18,12 @@ class ResponsiveCamera {
         this.camera.position.z = this.distance;
     }
 
-    // 计算可视范围
-    getVisibleRange() {
+    // 计算指定深度处的可视范围
+    getVisibleRange(depth = null) {
         const vFOV = (this.fov * Math.PI) / 180;
-        const height = 2 * Math.tan(vFOV / 2) * this.distance;
+        // 如果没有指定深度，使用相机的默认距离
+        const distance = depth !== null ? depth : this.distance;
+        const height = 2 * Math.tan(vFOV / 2) * distance;
         const width = height * (window.innerWidth / window.innerHeight);
 
         return { width, height };
@@ -29,11 +31,21 @@ class ResponsiveCamera {
 
     // 检查物体是否在可视范围内
     isObjectVisible(obj) {
-        const range = this.getVisibleRange();
         const pos = obj.position;
-        console.log(range);
+        
+        // 计算物体相对于相机的距离（沿着相机的视线方向）
+        const distanceFromCamera = this.camera.position.z - pos.z;
+        
+        // 计算物体所在深度的可视范围
+        const range = this.getVisibleRange(distanceFromCamera);
+        console.log('物体距离相机:', distanceFromCamera, '该深度的可视范围:', range);
 
-        return Math.abs(pos.x) <= range.width / 2 && Math.abs(pos.y) <= range.height / 2 && pos.z >= this.near && pos.z <= this.far;
+        return (
+            Math.abs(pos.x) <= range.width / 2 &&
+            Math.abs(pos.y) <= range.height / 2 &&
+            distanceFromCamera >= this.near &&
+            distanceFromCamera <= this.far
+        );
     }
 
     // 窗口大小改变时更新
@@ -101,11 +113,10 @@ scene.add(directionalLight);
 
 // 检查物体是否可见
 const cube = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 8), createMaterial());
-cube.position.set(20, 20, 0);
+cube.position.set(20, 20, -10);
 scene.add(cube);
 
 fitCameraToObjects(camera.getCamera(), [cube]);
-
 
 function animate(time) {
     renderer.render(scene, camera.getCamera());
