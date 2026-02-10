@@ -10,12 +10,13 @@ scene.background = new THREE.Color(0x222222);
 
 // 相机设置
 const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 120;
+camera.position.z = 40;
 
 // 渲染器设置
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+const viewContainer = document.getElementById('view');
+renderer.setSize(viewContainer.clientWidth, viewContainer.clientHeight);
+viewContainer.appendChild(renderer.domElement);
 
 // 添加光源
 {
@@ -36,13 +37,24 @@ document.body.appendChild(renderer.domElement);
 // 用于存储所有对象以便动画旋转
 const objects = [];
 
-// 网格布局参数
-const spread = 15;
+// 清除场景中的对象
+function clearScene() {
+    objects.forEach(obj => {
+        scene.remove(obj);
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+            if (Array.isArray(obj.material)) {
+                obj.material.forEach(m => m.dispose());
+            } else {
+                obj.material.dispose();
+            }
+        }
+    });
+    objects.length = 0;
+}
 
 // 添加对象到场景的辅助函数
-function addObject(x, y, obj) {
-    obj.position.x = x * spread;
-    obj.position.y = y * spread;
+function addObject(obj) {
     scene.add(obj);
     objects.push(obj);
 }
@@ -62,169 +74,236 @@ function createMaterial() {
 }
 
 // 添加实心几何体
-function addSolidGeometry(x, y, geometry) {
+function addSolidGeometry(geometry) {
     const mesh = new THREE.Mesh(geometry, createMaterial());
-    addObject(x, y, mesh);
+    addObject(mesh);
 }
 
 // 添加线框几何体
-function addLineGeometry(x, y, geometry) {
-    const material = new THREE.LineBasicMaterial({ color: 0x000000 });
+function addLineGeometry(geometry) {
+    const material = new THREE.LineBasicMaterial({ color: 0xFFFFFF });
     const mesh = new THREE.LineSegments(geometry, material);
-    addObject(x, y, mesh);
+    addObject(mesh);
 }
 
-// 创建所有几何体
-{
-    // 第一行：基础几何体
-    const width = 8;
-    const height = 8;
-    const depth = 8;
-    addSolidGeometry(-2, 2, new THREE.BoxGeometry(width, height, depth));
+// 辅助类和函数定义
+function klein(v, u, target) {
+    u *= Math.PI;
+    v *= 2 * Math.PI;
+    u = u * 2;
     
-    const radius = 7;
-    const segments = 24;
-    addSolidGeometry(-1, 2, new THREE.CircleGeometry(radius, segments));
-    
-    const radiusTop = 0;
-    const radiusBottom = 7;
-    const radialSegments = 24;
-    addSolidGeometry(0, 2, new THREE.ConeGeometry(radiusBottom, height, radialSegments));
-    
-    addSolidGeometry(1, 2, new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments));
-    
-    addSolidGeometry(2, 2, new THREE.DodecahedronGeometry(radius));
-    
-    // 第二行
-    const shape = new THREE.Shape();
-    const x = -2.5;
-    const y = -5;
-    shape.moveTo(x + 2.5, y + 2.5);
-    shape.bezierCurveTo(x + 2.5, y + 2.5, x + 2, y, x, y);
-    shape.bezierCurveTo(x - 3, y, x - 3, y + 3.5, x - 3, y + 3.5);
-    shape.bezierCurveTo(x - 3, y + 5.5, x - 1.5, y + 7.7, x + 2.5, y + 9.5);
-    shape.bezierCurveTo(x + 6, y + 7.7, x + 8, y + 4.5, x + 8, y + 3.5);
-    shape.bezierCurveTo(x + 8, y + 3.5, x + 8, y, x + 5, y);
-    shape.bezierCurveTo(x + 3.5, y, x + 2.5, y + 2.5, x + 2.5, y + 2.5);
-    
-    const extrudeSettings = {
-        steps: 2,
-        depth: 2,
-        bevelEnabled: true,
-        bevelThickness: 1,
-        bevelSize: 1,
-        bevelSegments: 2,
-    };
-    addSolidGeometry(-2, 1, new THREE.ExtrudeGeometry(shape, extrudeSettings));
-    
-    addSolidGeometry(-1, 1, new THREE.IcosahedronGeometry(radius));
-    
-    const points = [];
-    for (let i = 0; i < 10; ++i) {
-        points.push(new THREE.Vector2(Math.sin(i * 0.2) * 3 + 3, (i - 5) * .8));
-    }
-    addSolidGeometry(0, 1, new THREE.LatheGeometry(points));
-    
-    addSolidGeometry(1, 1, new THREE.OctahedronGeometry(radius));
-    
-    // 使用 ParametricGeometry
-    function klein(v, u, target) {
-        u *= Math.PI;
-        v *= 2 * Math.PI;
-        u = u * 2;
-        
-        let x, z;
-        if (u < Math.PI) {
-            x = 3 * Math.cos(u) * (1 + Math.sin(u)) + (2 * (1 - Math.cos(u) / 2)) * Math.cos(u) * Math.cos(v);
-            z = -8 * Math.sin(u) - 2 * (1 - Math.cos(u) / 2) * Math.sin(u) * Math.cos(v);
-        } else {
-            x = 3 * Math.cos(u) * (1 + Math.sin(u)) + (2 * (1 - Math.cos(u) / 2)) * Math.cos(v + Math.PI);
-            z = -8 * Math.sin(u);
-        }
-        
-        const y = -2 * (1 - Math.cos(u) / 2) * Math.sin(v);
-        
-        target.set(x, y, z).multiplyScalar(0.75);
+    let x, z;
+    if (u < Math.PI) {
+        x = 3 * Math.cos(u) * (1 + Math.sin(u)) + (2 * (1 - Math.cos(u) / 2)) * Math.cos(u) * Math.cos(v);
+        z = -8 * Math.sin(u) - 2 * (1 - Math.cos(u) / 2) * Math.sin(u) * Math.cos(v);
+    } else {
+        x = 3 * Math.cos(u) * (1 + Math.sin(u)) + (2 * (1 - Math.cos(u) / 2)) * Math.cos(v + Math.PI);
+        z = -8 * Math.sin(u);
     }
     
-    const slices = 25;
-    const stacks = 25;
-    addSolidGeometry(2, 1, new ParametricGeometry(klein, slices, stacks));
+    const y = -2 * (1 - Math.cos(u) / 2) * Math.sin(v);
     
-    // 第三行
-    addSolidGeometry(-2, 0, new THREE.PlaneGeometry(width, height, 2, 2));
-    
-    const vertexCount = 32;
-    const innerRadius = 2;
-    const outerRadius = 7;
-    addSolidGeometry(-1, 0, new THREE.RingGeometry(innerRadius, outerRadius, vertexCount));
-    
-    const tubeRadius = 2;
-    addSolidGeometry(0, 0, new THREE.SphereGeometry(radius, 12, 8));
-    
-    addSolidGeometry(1, 0, new THREE.TetrahedronGeometry(radius));
-    
-    const loader = new FontLoader();
-    const font = loader.parse(local_font);
-    const textGeometry = new TextGeometry('three.js', {
-        font: font,
-        size: 3,
-        depth: .2,
-        curveSegments: 12,
-        bevelEnabled: true,
-        bevelThickness: 0.15,
-        bevelSize: .3,
-        bevelSegments: 5,
-    });
-    const textMesh = new THREE.Mesh(textGeometry, createMaterial());
-    textGeometry.computeBoundingBox();
-    textGeometry.boundingBox.getCenter(textMesh.position).multiplyScalar(-1);
-    
-    const textParent = new THREE.Object3D();
-    textParent.add(textMesh);
-    
-    addObject(2, 0, textParent);
-    
-    // 第四行
-    addSolidGeometry(-2, -1, new THREE.TorusGeometry(radius, tubeRadius, 8, 24));
-    
-    const p = 2;
-    const q = 3;
-    addSolidGeometry(-1, -1, new THREE.TorusKnotGeometry(radius, tubeRadius, 64, 8, p, q));
-    
-    class CustomSinCurve extends THREE.Curve {
-        constructor(scale) {
-            super();
-            this.scale = scale;
-        }
-        getPoint(t) {
-            const tx = t * 3 - 1.5;
-            const ty = Math.sin(2 * Math.PI * t);
-            const tz = 0;
-            return new THREE.Vector3(tx, ty, tz).multiplyScalar(this.scale);
-        }
-    }
-    
-    const path = new CustomSinCurve(4);
-    const tubularSegments = 20;
-    const radiusSegments = 8;
-    const closed = false;
-    addSolidGeometry(0, -1, new THREE.TubeGeometry(path, tubularSegments, tubeRadius, radiusSegments, closed));
-    
-    // 边缘几何体 (Edges)
-    const edgesGeometry = new THREE.EdgesGeometry(new THREE.BoxGeometry(width, height, depth));
-    addLineGeometry(1, -1, edgesGeometry);
-    
-    // 线框几何体 (Wireframe)
-    const wireframeGeometry = new THREE.WireframeGeometry(new THREE.SphereGeometry(radius, 12, 8));
-    addLineGeometry(2, -1, wireframeGeometry);
+    target.set(x, y, z).multiplyScalar(0.75);
 }
+
+class CustomSinCurve extends THREE.Curve {
+    constructor(scale) {
+        super();
+        this.scale = scale;
+    }
+    getPoint(t) {
+        const tx = t * 3 - 1.5;
+        const ty = Math.sin(2 * Math.PI * t);
+        const tz = 0;
+        return new THREE.Vector3(tx, ty, tz).multiplyScalar(this.scale);
+    }
+}
+
+// 定义所有基础元件
+const primitives = {
+    'BoxGeometry': () => {
+        const width = 8;
+        const height = 8;
+        const depth = 8;
+        addSolidGeometry(new THREE.BoxGeometry(width, height, depth));
+    },
+    'CircleGeometry': () => {
+        const radius = 7;
+        const segments = 24;
+        addSolidGeometry(new THREE.CircleGeometry(radius, segments));
+    },
+    'ConeGeometry': () => {
+        const radius = 7;
+        const height = 8;
+        const segments = 24;
+        addSolidGeometry(new THREE.ConeGeometry(radius, height, segments));
+    },
+    'CylinderGeometry': () => {
+        const radiusTop = 4; // Adjusted to look more like a cylinder, original was 0 (cone)
+        const radiusBottom = 7;
+        const height = 8;
+        const radialSegments = 24;
+        addSolidGeometry(new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments));
+    },
+    'DodecahedronGeometry': () => {
+        const radius = 7;
+        addSolidGeometry(new THREE.DodecahedronGeometry(radius));
+    },
+    'ExtrudeGeometry': () => {
+        const shape = new THREE.Shape();
+        const x = -2.5;
+        const y = -5;
+        shape.moveTo(x + 2.5, y + 2.5);
+        shape.bezierCurveTo(x + 2.5, y + 2.5, x + 2, y, x, y);
+        shape.bezierCurveTo(x - 3, y, x - 3, y + 3.5, x - 3, y + 3.5);
+        shape.bezierCurveTo(x - 3, y + 5.5, x - 1.5, y + 7.7, x + 2.5, y + 9.5);
+        shape.bezierCurveTo(x + 6, y + 7.7, x + 8, y + 4.5, x + 8, y + 3.5);
+        shape.bezierCurveTo(x + 8, y + 3.5, x + 8, y, x + 5, y);
+        shape.bezierCurveTo(x + 3.5, y, x + 2.5, y + 2.5, x + 2.5, y + 2.5);
+        
+        const extrudeSettings = {
+            steps: 2,
+            depth: 2,
+            bevelEnabled: true,
+            bevelThickness: 1,
+            bevelSize: 1,
+            bevelSegments: 2,
+        };
+        addSolidGeometry(new THREE.ExtrudeGeometry(shape, extrudeSettings));
+    },
+    'IcosahedronGeometry': () => {
+        const radius = 7;
+        addSolidGeometry(new THREE.IcosahedronGeometry(radius));
+    },
+    'LatheGeometry': () => {
+        const points = [];
+        for (let i = 0; i < 10; ++i) {
+            points.push(new THREE.Vector2(Math.sin(i * 0.2) * 3 + 3, (i - 5) * .8));
+        }
+        addSolidGeometry(new THREE.LatheGeometry(points));
+    },
+    'OctahedronGeometry': () => {
+        const radius = 7;
+        addSolidGeometry(new THREE.OctahedronGeometry(radius));
+    },
+    'ParametricGeometry': () => {
+        const slices = 25;
+        const stacks = 25;
+        addSolidGeometry(new ParametricGeometry(klein, slices, stacks));
+    },
+    'PlaneGeometry': () => {
+        const width = 8;
+        const height = 8;
+        addSolidGeometry(new THREE.PlaneGeometry(width, height, 2, 2));
+    },
+    'RingGeometry': () => {
+        const innerRadius = 2;
+        const outerRadius = 7;
+        const thetaSegments = 18;
+        addSolidGeometry(new THREE.RingGeometry(innerRadius, outerRadius, thetaSegments));
+    },
+    'SphereGeometry': () => {
+        const radius = 7;
+        const widthSegments = 12;
+        const heightSegments = 8;
+        addSolidGeometry(new THREE.SphereGeometry(radius, widthSegments, heightSegments));
+    },
+    'TetrahedronGeometry': () => {
+        const radius = 7;
+        addSolidGeometry(new THREE.TetrahedronGeometry(radius));
+    },
+    'TextGeometry': () => {
+        const loader = new FontLoader();
+        const font = loader.parse(local_font);
+        const textGeometry = new TextGeometry('three.js', {
+            font: font,
+            size: 3,
+            depth: .2,
+            curveSegments: 12,
+            bevelEnabled: true,
+            bevelThickness: 0.15,
+            bevelSize: .3,
+            bevelSegments: 5,
+        });
+        textGeometry.computeBoundingBox();
+        textGeometry.center();
+        addSolidGeometry(textGeometry);
+    },
+    'TorusGeometry': () => {
+        const radius = 5;
+        const tubeRadius = 2;
+        const radialSegments = 8;
+        const tubularSegments = 24;
+        addSolidGeometry(new THREE.TorusGeometry(radius, tubeRadius, radialSegments, tubularSegments));
+    },
+    'TorusKnotGeometry': () => {
+        const radius = 3.5;
+        const tubeRadius = 1.5;
+        const tubularSegments = 64;
+        const radialSegments = 8;
+        const p = 2;
+        const q = 3;
+        addSolidGeometry(new THREE.TorusKnotGeometry(radius, tubeRadius, tubularSegments, radialSegments, p, q));
+    },
+    'TubeGeometry': () => {
+        const path = new CustomSinCurve(4);
+        const tubularSegments = 20;
+        const radius = 1;
+        const radialSegments = 8;
+        const closed = false;
+        addSolidGeometry(new THREE.TubeGeometry(path, tubularSegments, radius, radialSegments, closed));
+    },
+    'EdgesGeometry': () => {
+        const width = 8;
+        const height = 8;
+        const depth = 8;
+        const boxGeometry = new THREE.BoxGeometry(width, height, depth);
+        const edges = new THREE.EdgesGeometry(boxGeometry);
+        addLineGeometry(edges);
+    },
+    'WireframeGeometry': () => {
+        const radius = 7;
+        const widthSegments = 12;
+        const heightSegments = 8;
+        const geometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
+        const wireframe = new THREE.WireframeGeometry(geometry);
+        addLineGeometry(wireframe);
+    }
+};
+
+// 生成菜单并绑定事件
+const sidebar = document.getElementById('sidebar');
+const info = document.getElementById('info');
+
+Object.keys(primitives).forEach((name, index) => {
+    const button = document.createElement('button');
+    button.textContent = name;
+    button.addEventListener('click', () => {
+        // 更新激活状态
+        document.querySelectorAll('#sidebar button').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // 更新描述
+        info.textContent = name;
+        
+        // 切换几何体
+        clearScene();
+        primitives[name]();
+    });
+    sidebar.appendChild(button);
+    
+    // 默认选中第一个
+    if (index === 0) {
+        button.click();
+    }
+});
 
 // 窗口调整大小处理
 function resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    // 使用容器的大小
+    const width = viewContainer.clientWidth;
+    const height = viewContainer.clientHeight;
     const needResize = canvas.width !== width || canvas.height !== height;
     if (needResize) {
         renderer.setSize(width, height, false);
@@ -243,7 +322,7 @@ function animate(time) {
     }
     
     objects.forEach((obj, ndx) => {
-        const speed = 0.1 + ndx * 0.05;
+        const speed = 0.5;
         const rot = time * speed;
         obj.rotation.x = rot;
         obj.rotation.y = rot;

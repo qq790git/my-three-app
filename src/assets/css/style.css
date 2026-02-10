@@ -25,3 +25,14 @@ body {
     border-radius: 4px;
     backdrop-filter: blur(4px); /* 磨砂玻璃效果，WebGL里很难做，这里一行代码搞定 */
 }
+
+html, body {
+  margin: 0;
+  height: 100%;
+}
+
+#c {
+  width: 100%;  /* 宽度占满父容器 */
+  height: 100%; /* 高度占满父容器 */
+  display: block; /* 关键！去除底部留白 */
+}

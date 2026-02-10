@@ -4,10 +4,72 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="../../assets/css/style.css"/>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            background-color: #222; /* Override global style */
+        }
+        #sidebar {
+            width: 200px;
+            background: #333;
+            color: white;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+            border-right: 1px solid #444;
+        }
+        #sidebar button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        #sidebar button:hover {
+            background: #666;
+        }
+        #sidebar button.active {
+            background: #4CAF50;
+            color: white;
+        }
+        #view {
+            flex: 1;
+            position: relative;
+            background: #222;
+            overflow: hidden;
+        }
+        #view canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
 </head>
 <body>
-    <!-- <canvas id="three-canvas"></canvas>-->
-    <div id="info">Description</div>
+    <div id="sidebar">
+        <!-- Menu items will be generated here -->
+    </div>
+    <div id="view">
+        <div id="info">Select a primitive</div>
+    </div>
     <script src="./index.js" type="module"></script>
 </body>
 </html>
