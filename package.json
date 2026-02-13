@@ -2,7 +2,7 @@
   "name": "my-three-app",
   "version": "1.0.0",
   "scripts": {
-    "dev": "parcel src/main/Primitives/index.html",
+    "dev": "parcel src/main/Geometries/capsule.html",
     "build": "parcel build src/main/Text/index.html"
   },
   "keywords": [],
@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "lil-gui": "^0.21.0",
     "three": "^0.182.0"
   },
   "devDependencies": {
