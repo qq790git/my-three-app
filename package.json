@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "parcel src/main/Geometries/capsule.html",
+    "dev:scene": "parcel src/main/scene/newIndex.html",
     "build": "parcel build src/main/Text/index.html"
   },
   "keywords": [],

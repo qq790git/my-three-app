@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three.js Scene Graph - 场景图完整演示</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; font-family: 'PingFang SC', 'Microsoft YaHei', monospace; }
+        canvas { display: block; }
+
+        /* ── 顶部标题栏 ────────────────────────────────── */
+        #header {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 10px 16px;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+        }
+        #header h1 {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+
+        /* ── 场景切换标签 ──────────────────────────────── */
+        .tab-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+        }
+        .tab-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* ── 左侧说明面板 ──────────────────────────────── */
+        #info-panel {
+            position: absolute;
+            top: 52px;
+            left: 10px;
+            width: 240px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: #ccc;
+            font-size: 12px;
+            line-height: 1.7;
+            z-index: 10;
+        }
+        #info-panel .panel-title {
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        #info-panel .tree {
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 11px;
+            color: #7dd3fc;
+            margin: 8px 0;
+            line-height: 1.7;
+            white-space: pre;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 4px;
+        }
+        #info-panel .hint {
+            color: #86efac;
+            font-size: 11px;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        #info-panel .warn {
+            color: #fbbf24;
+            font-size: 11px;
+        }
+
+        /* ── 交互提示（右下角）──────────────────────────── */
+        #controls-hint {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            color: rgba(255,255,255,0.35);
+            font-size: 11px;
+            line-height: 1.8;
+            text-align: right;
+            z-index: 10;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题 + 场景切换 -->
+    <div id="header">
+        <h1>🌳 Three.js 场景图演示</h1>
+        <div class="tab-group">
+            <button class="tab-btn active" data-scene="solar">🌞 太阳系</button>
+            <button class="tab-btn" data-scene="car">🚗 汽车模型</button>
+            <button class="tab-btn" data-scene="group">📦 Group演示</button>
+            <button class="tab-btn" data-scene="pitfall">⚠️ 常见坑点</button>
+        </div>
+    </div>
+
+    <!-- 左侧说明 -->
+    <div id="info-panel">
+        <div class="panel-title" id="panel-title">太阳系 - 场景图层级</div>
+        <div class="tree" id="panel-tree"></div>
+        <div class="hint" id="panel-hint"></div>
+    </div>
+
+    <!-- 右下角操作提示 -->
+    <div id="controls-hint">
+        拖拽旋转 · 滚轮缩放 · 右键平移
+    </div>
+
+    <script src="./newIndex.js" type="module"></script>
+</body>
+</html>
